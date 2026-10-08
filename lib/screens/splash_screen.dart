@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
-/// SPLASH SCREEN - LautCare 
+/// SPLASH SCREEN - LautCare
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,7 +15,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   // Ubah durasi splash di sini (contoh: Duration(minutes: 2))
-  static const Duration kSplashDuration = Duration(minutes: 1);
+  static const Duration kSplashDuration = Duration(seconds: 6);
   static const Color kBlue = Color(0xFF1565C0);
 
   late final AnimationController _ctrl;
@@ -31,8 +32,10 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1400),
     )..forward();
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
-    _scale = Tween<double>(begin: 0.7, end: 1.0)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
+    _scale = Tween<double>(
+      begin: 0.7,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
 
     // Pindah ke Login setelah durasi selesai
     _timer = Timer(kSplashDuration, () {
@@ -85,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Peduli Laut, Mulai dari Kita',
+                      'Jaga Laut, Jaga Masa Depan',
                       style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
@@ -266,8 +269,10 @@ class _SceneryPainter extends CustomPainter {
 
   void _ship(Canvas c, Offset o, double s) {
     void box(double dx, double dy, double bw, double bh, Color col) =>
-        c.drawRect(Rect.fromLTWH(o.dx + dx * s, o.dy + dy * s, bw * s, bh * s),
-            Paint()..color = col);
+        c.drawRect(
+          Rect.fromLTWH(o.dx + dx * s, o.dy + dy * s, bw * s, bh * s),
+          Paint()..color = col,
+        );
 
     // Badan kapal
     c.drawPath(
