@@ -198,7 +198,12 @@ class BerandaScreen extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
-                TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/search');
+                  },
+                  child: const Text('Lihat Semua'),
+                ),
               ],
             ),
 
