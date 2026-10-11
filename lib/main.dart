@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
+
+import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart'; 
+import 'screens/register_screen.dart';
+import 'screens/beranda_screen.dart';
+import 'screens/laporan_screen.dart';
 
 void main() {
   runApp(const LautCareApp());
@@ -11,13 +16,23 @@ class LautCareApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'LautCare',
+      debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF4FBFF),
         useMaterial3: true,
+        colorSchemeSeed: const Color(0xFF1565C0),
       ),
-      home: const LoginScreen(),
+
+      initialRoute: '/',
+
+      routes: {
+        '/': (_) => const SplashScreen(),
+        '/login': (_) => const LoginScreen(),
+        '/register': (_) => const RegisterScreen(),
+        '/beranda': (_) => const BerandaScreen(),
+        '/laporan': (context) => const LaporanScreen(),
+      },
     );
   }
 }
