@@ -248,7 +248,9 @@ class BerandaScreen extends StatelessWidget {
               width: double.infinity,
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                   Navigator.pushNamed(context, '/laporan');
+                },
                 icon: const Icon(Icons.add),
                 label: const Text(
                   'Buat Laporan',
@@ -275,6 +277,12 @@ class BerandaScreen extends StatelessWidget {
         currentIndex: 0,
         selectedItemColor: const Color(0xFF0878D1),
         unselectedItemColor: Colors.grey,
+        onTap: (index) {
+           if (index == 1) {
+             Navigator.pushNamed(context, '/laporan');
+       }
+       },
+
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
