@@ -61,7 +61,7 @@ class BerandaScreen extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     Image.asset(
-                      'assets/images/benner_beranda.jpeg',
+                      'assets/images/benner_beranda.jpg',
                       fit: BoxFit.cover,
                     ),
 
@@ -249,7 +249,7 @@ class BerandaScreen extends StatelessWidget {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () {
-                   Navigator.pushNamed(context, '/laporan');
+                  Navigator.pushNamed(context, '/laporan');
                 },
                 icon: const Icon(Icons.add),
                 label: const Text(
@@ -278,10 +278,10 @@ class BerandaScreen extends StatelessWidget {
         selectedItemColor: const Color(0xFF0878D1),
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-           if (index == 1) {
-             Navigator.pushNamed(context, '/laporan');
-       }
-       },
+          if (index == 1) {
+            Navigator.pushNamed(context, '/laporan');
+          }
+        },
 
         items: const [
           BottomNavigationBarItem(

@@ -59,7 +59,7 @@ flutter:
 
   assets:
     - assets/images/LautCare_Ocean_Wave_Logo-removebg-preview.png
-    - assets/images/benner_beranda.jpeg
+    - assets/images/benner_beranda.jpg
     - assets/images/splash.jpeg
   # To add assets to your application, add an assets section, like this:
   # assets:
