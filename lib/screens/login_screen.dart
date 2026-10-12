@@ -43,15 +43,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(painter: LoginBackgroundPainter()),
-          ),
-
-          SafeArea(
+    
+return Scaffold(
+  backgroundColor: const Color(0xFF54C5F0),
+  body: Stack(
+    children: [
+      Positioned.fill(
+        child: CustomPaint(
+          painter: LoginBackgroundPainter(),
+        ),
+      ),
+  
+      SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 80),
               child: Column(
@@ -297,7 +300,7 @@ class LoginBackgroundPainter extends CustomPainter {
 
     final path1 = Path();
 
-    final waveTop = size.height * 0.87;
+    final waveTop = size.height * 0.72;
 
     path1.moveTo(0, waveTop);
 
