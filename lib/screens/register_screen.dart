@@ -18,8 +18,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePass = true;
   bool _obscureConfirm = true;
 
-  static const _navy = Color(0xFF0F3A60);
-  static const _blue = Color(0xFF1565C0);
+  // Warna disamakan dengan halaman Login
+  static const _navy = Color(0xFF154B79);
+  static const _blue = Color(0xFF0878D1);
 
   @override
   void dispose() {
@@ -62,9 +63,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  // Setelah daftar, kembali ke halaman Login (bukan ke Beranda)
   void _daftar() {
     if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacementNamed(context, '/beranda');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Akun berhasil dibuat, silakan login')),
+      );
+      Navigator.pop(context);
     }
   }
 
@@ -74,32 +79,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: ClipPath(
-              clipper: _Wave1(),
-              child: Container(
-                height: 55,
-                color: const Color(0xFFE0F2FE).withOpacity(0.8),
-              ),
-            ),
-          ),
-
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: ClipPath(
-              clipper: _Wave2(),
-              child: Container(height: 40, color: const Color(0xFFBAE6FD)),
-            ),
+          // Ombak 3 lapis, sama dengan halaman Login
+          Positioned.fill(
+            child: CustomPaint(painter: _RegisterWavePainter()),
           ),
 
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 60),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 190),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -309,56 +296,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
-class _Wave1 extends CustomClipper<Path> {
+// Ombak 3 lapis, angka dan warnanya sama dengan LoginWavePainter
+class _RegisterWavePainter extends CustomPainter {
   @override
-  Path getClip(Size size) {
-    var path = Path()..lineTo(0, size.height * 0.4);
+  void paint(Canvas canvas, Size size) {
+    void drawWave(double start, double amplitude, Color color) {
+      final path = Path()..moveTo(0, start);
 
-    var p1 = Offset(size.width * 0.25, size.height * 0.1);
+      path.cubicTo(
+        size.width * 0.20, start - amplitude,
+        size.width * 0.36, start + amplitude,
+        size.width * 0.55, start,
+      );
 
-    var e1 = Offset(size.width * 0.5, size.height * 0.4);
+      path.cubicTo(
+        size.width * 0.75, start - amplitude,
+        size.width * 0.88, start + amplitude,
+        size.width, start - amplitude * 0.3,
+      );
 
-    var p2 = Offset(size.width * 0.75, size.height * 0.7);
+      path
+        ..lineTo(size.width, size.height)
+        ..lineTo(0, size.height)
+        ..close();
 
-    var e2 = Offset(size.width, size.height * 0.3);
+      canvas.drawPath(path, Paint()..color = color);
+    }
 
-    path.quadraticBezierTo(p1.dx, p1.dy, e1.dx, e1.dy);
-
-    path.quadraticBezierTo(p2.dx, p2.dy, e2.dx, e2.dy);
-
-    return path
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
+    drawWave(size.height * 0.76, 35, const Color(0xFFE0F6FF));
+    drawWave(size.height * 0.83, 35, const Color(0xFFB7E9FA));
+    drawWave(size.height * 0.91, 30, const Color(0xFF54C5F0));
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> old) => false;
-}
-
-class _Wave2 extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path()..lineTo(0, size.height * 0.2);
-
-    var p1 = Offset(size.width * 0.35, size.height * 0.6);
-
-    var e1 = Offset(size.width * 0.7, size.height * 0.3);
-
-    var p2 = Offset(size.width * 0.85, 0);
-
-    var e2 = Offset(size.width, size.height * 0.4);
-
-    path.quadraticBezierTo(p1.dx, p1.dy, e1.dx, e1.dy);
-
-    path.quadraticBezierTo(p2.dx, p2.dy, e2.dx, e2.dy);
-
-    return path
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> old) => false;
+  bool shouldRepaint(covariant _RegisterWavePainter oldDelegate) => false;
 }
