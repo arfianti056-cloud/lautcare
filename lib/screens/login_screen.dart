@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -8,11 +9,15 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
-  final TextEditingController passwordController = TextEditingController();
-
+  bool isAdmin = false;
   bool hidePassword = true;
+
+  static const blue = Color(0xFF0878D1);
+  static const navy = Color(0xFF154B79);
+  static const lightBlue = Color(0xFFD9E8F5);
 
   @override
   void dispose() {
@@ -22,19 +27,20 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void login() {
-    final email = emailController.text.trim();
-    final password = passwordController.text;
-
-    if (email.isEmpty || password.isEmpty) {
+    if (emailController.text.trim().isEmpty ||
+        passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Email/Nomor HP dan password harus diisi'),
+          content: Text('Email/username dan password harus diisi'),
         ),
       );
       return;
     }
 
-    Navigator.pushReplacementNamed(context, '/beranda');
+    Navigator.pushReplacementNamed(
+      context,
+      isAdmin ? '/admin' : '/beranda',
+    );
   }
 
   void register() {
@@ -48,346 +54,359 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: CustomPaint(painter: LoginBackgroundPainter()),
+            child: CustomPaint(
+              painter: LoginWavePainter(),
+            ),
           ),
-
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 80),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // =================================================
-                  // LOGO + NAMA LAUTCARE
-                  // =================================================
-
-                  Row(
-                    children: [
-                      Image.asset(
-                        'assets/images/LautCare_Ocean_Wave_Logo-removebg-preview.png',
-                        width: 32,
-                        height: 32,
-                        fit: BoxFit.contain,
-                      ),
-                      const SizedBox(width: 5),
-                      const Text(
-                        'LautCare',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0878D1),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // =================================================
-                  // WELCOME
-                  // =================================================
-                  const Text(
-                    'Selamat datang kembali',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF154B79),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 190),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 650),
+                      child: _loginForm(),
                     ),
                   ),
-
-                  const SizedBox(height: 3),
-
-                  const Text(
-                    'Masuk untuk melanjutkan',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF557894)),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // =================================================
-                  // EMAIL / NOMOR HP
-                  // =================================================
-                  const Text(
-                    'Email atau Nomor HP',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF234C6D),
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(fontSize: 11),
-                    decoration: InputDecoration(
-                      hintText: 'contoh@email.com',
-                      hintStyle: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFFB0BEC5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(7),
-                        borderSide: const BorderSide(color: Color(0xFFD9E8F0)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(7),
-                        borderSide: const BorderSide(color: Color(0xFFD9E8F0)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(7),
-                        borderSide: const BorderSide(color: Color(0xFF0878D1)),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // =================================================
-                  // PASSWORD
-                  // =================================================
-                  const Text(
-                    'Password',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF234C6D),
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  TextField(
-                    controller: passwordController,
-                    obscureText: hidePassword,
-                    style: const TextStyle(fontSize: 11),
-                    decoration: InputDecoration(
-                      hintText: 'Masukkan password',
-                      hintStyle: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFFB0BEC5),
-                      ),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            hidePassword = !hidePassword;
-                          });
-                        },
-                        icon: Icon(
-                          hidePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          size: 17,
-                          color: const Color(0xFF527B99),
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(7),
-                        borderSide: const BorderSide(color: Color(0xFFD9E8F0)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(7),
-                        borderSide: const BorderSide(color: Color(0xFFD9E8F0)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(7),
-                        borderSide: const BorderSide(color: Color(0xFF0878D1)),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 17),
-
-                  // =================================================
-                  // LOGIN BUTTON
-                  // =================================================
-                  SizedBox(
-                    width: double.infinity,
-                    height: 40,
-                    child: ElevatedButton(
-                      onPressed: login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0878D1),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // =================================================
-                  // REGISTER
-                  // =================================================
-                  Center(
-                    child: GestureDetector(
-                      onTap: register,
-                      child: RichText(
-                        text: const TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Belum punya akun? ',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Color(0xFF527B99),
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'Daftar di sini',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0878D1),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _loginForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Pilihan Pelapor dan Admin
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F7FB),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: lightBlue),
+          ),
+          child: Row(
+            children: [
+              _roleButton(
+                'Pelapor',
+                Icons.person_outline,
+                !isAdmin,
+                () => setState(() => isAdmin = false),
+              ),
+              _roleButton(
+                'Admin',
+                Icons.shield_outlined,
+                isAdmin,
+                () => setState(() => isAdmin = true),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 30),
+
+        Text(
+          isAdmin ? 'Login Admin' : 'Selamat datang kembali',
+          style: const TextStyle(
+            fontSize: 27,
+            fontWeight: FontWeight.bold,
+            color: navy,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          isAdmin
+              ? 'Masuk untuk mengakses panel admin LautCare'
+              : 'Masuk untuk melanjutkan',
+          style: const TextStyle(
+            fontSize: 15,
+            color: Color(0xFF557894),
+          ),
+        ),
+
+        const SizedBox(height: 30),
+
+        _label(isAdmin ? 'Username atau Email' : 'Email atau Nomor HP'),
+        const SizedBox(height: 9),
+
+        _input(
+          controller: emailController,
+          hint: isAdmin ? 'Masukkan username atau email' : 'contoh@email.com',
+          icon: isAdmin ? Icons.person_outline : Icons.mail_outline,
+        ),
+
+        const SizedBox(height: 22),
+
+        _label('Password'),
+        const SizedBox(height: 9),
+
+        _input(
+          controller: passwordController,
+          hint: 'Masukkan password',
+          icon: Icons.lock_outline,
+          password: true,
+        ),
+
+        const SizedBox(height: 26),
+
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            onPressed: login,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: blue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Login',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+
+        if (!isAdmin) ...[
+          const SizedBox(height: 20),
+
+          Center(
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              children: [
+                const Text(
+                  'Belum punya akun? ',
+                  style: TextStyle(color: Color(0xFF557894)),
+                ),
+                GestureDetector(
+                  onTap: register,
+                  child: const Text(
+                    'Daftar di sini',
+                    style: TextStyle(
+                      color: blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          const Row(
+            children: [
+              Expanded(child: Divider(color: lightBlue)),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14),
+                child: Text(
+                  'atau',
+                  style: TextStyle(color: Color(0xFF557894)),
+                ),
+              ),
+              Expanded(child: Divider(color: lightBlue)),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Login Google belum diintegrasikan.',
+                    ),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: navy,
+                side: const BorderSide(color: lightBlue),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('G  Login dengan Google'),
+            ),
+          ),
+        ] else ...[
+          const SizedBox(height: 24),
+          const Center(
+            child: Text(
+              'Khusus untuk admin LautCare',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF557894),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _roleButton(
+    String title,
+    IconData icon,
+    bool selected,
+    VoidCallback onTap,
+  ) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          decoration: BoxDecoration(
+            color: selected ? blue : Colors.transparent,
+            borderRadius: BorderRadius.circular(26),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 19,
+                color: selected ? Colors.white : const Color(0xFF6A88AD),
+              ),
+              const SizedBox(width: 7),
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: selected ? Colors.white : const Color(0xFF6A88AD),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _label(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: navy,
+      ),
+    );
+  }
+
+  Widget _input({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool password = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: password && hidePassword,
+      keyboardType: password
+          ? TextInputType.text
+          : TextInputType.emailAddress,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(
+          fontSize: 14,
+          color: Color(0xFFB0BEC5),
+        ),
+        prefixIcon: Icon(icon, color: const Color(0xFF6A88AD)),
+        suffixIcon: password
+            ? IconButton(
+                onPressed: () {
+                  setState(() => hidePassword = !hidePassword);
+                },
+                icon: Icon(
+                  hidePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: const Color(0xFF527B99),
+                ),
+              )
+            : null,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 19,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: lightBlue),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: blue, width: 1.5),
+        ),
+      ),
+    );
+  }
 }
 
-// =============================================================
-// BACKGROUND LOGIN
-// =============================================================
-
-class LoginBackgroundPainter extends CustomPainter {
+class LoginWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final backgroundPaint = Paint()..color = Colors.white;
+    void drawWave(double start, double amplitude, Color color) {
+      final path = Path()..moveTo(0, start);
 
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      backgroundPaint,
+      path.cubicTo(
+        size.width * 0.20, start - amplitude,
+        size.width * 0.36, start + amplitude,
+        size.width * 0.55, start,
+      );
+
+      path.cubicTo(
+        size.width * 0.75, start - amplitude,
+        size.width * 0.88, start + amplitude,
+        size.width, start - amplitude * 0.3,
+      );
+
+      path
+        ..lineTo(size.width, size.height)
+        ..lineTo(0, size.height)
+        ..close();
+
+      canvas.drawPath(path, Paint()..color = color);
+    }
+
+    drawWave(
+      size.height * 0.76,
+      35,
+      const Color(0xFFE0F6FF),
     );
 
-    final wave1 = Paint()..color = const Color(0xFFE0F6FF);
-
-    final path1 = Path();
-
-    final waveTop = size.height * 0.87;
-
-    path1.moveTo(0, waveTop);
-
-    path1.cubicTo(
-      size.width * 0.20,
-      waveTop - 35,
-      size.width * 0.38,
-      waveTop + 30,
-      size.width * 0.55,
-      waveTop - 5,
+    drawWave(
+      size.height * 0.83,
+      35,
+      const Color(0xFFB7E9FA),
     );
 
-    path1.cubicTo(
-      size.width * 0.72,
-      waveTop - 40,
-      size.width * 0.88,
-      waveTop + 20,
-      size.width,
-      waveTop - 15,
+    drawWave(
+      size.height * 0.91,
+      30,
+      const Color(0xFF54C5F0),
     );
-
-    path1.lineTo(size.width, size.height);
-    path1.lineTo(0, size.height);
-    path1.close();
-
-    canvas.drawPath(path1, wave1);
-
-    final wave2 = Paint()..color = const Color(0xFFB7E9FA);
-
-    final path2 = Path();
-
-    path2.moveTo(0, waveTop + 35);
-
-    path2.cubicTo(
-      size.width * 0.22,
-      waveTop - 5,
-      size.width * 0.40,
-      waveTop + 65,
-      size.width * 0.58,
-      waveTop + 20,
-    );
-
-    path2.cubicTo(
-      size.width * 0.78,
-      waveTop - 15,
-      size.width * 0.90,
-      waveTop + 50,
-      size.width,
-      waveTop + 10,
-    );
-
-    path2.lineTo(size.width, size.height);
-    path2.lineTo(0, size.height);
-    path2.close();
-
-    canvas.drawPath(path2, wave2);
-
-    final wave3 = Paint()..color = const Color(0xFF54C5F0);
-
-    final path3 = Path();
-
-    path3.moveTo(0, waveTop + 65);
-
-    path3.cubicTo(
-      size.width * 0.20,
-      waveTop + 25,
-      size.width * 0.42,
-      waveTop + 95,
-      size.width * 0.60,
-      waveTop + 50,
-    );
-
-    path3.cubicTo(
-      size.width * 0.78,
-      waveTop + 20,
-      size.width * 0.90,
-      waveTop + 80,
-      size.width,
-      waveTop + 40,
-    );
-
-    path3.lineTo(size.width, size.height);
-    path3.lineTo(0, size.height);
-    path3.close();
-
-    canvas.drawPath(path3, wave3);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
+  bool shouldRepaint(covariant LoginWavePainter oldDelegate) => false;
 }
