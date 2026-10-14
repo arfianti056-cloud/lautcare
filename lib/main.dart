@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'screens/splash_screen.dart';
-import 'screens/login_screen.dart'; 
+import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
-import 'screens/beranda_screen.dart';
-import 'screens/laporan_screen.dart';
+import 'pelapor/beranda_screen.dart';
+import 'pelapor/buat_laporan/laporan_screen.dart';
 
 void main() {
   runApp(const LautCareApp());

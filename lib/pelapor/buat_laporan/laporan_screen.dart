@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class LaporanScreen extends StatefulWidget {
@@ -41,9 +40,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
       prefixIcon: Icon(icon, color: biruLaut),
       filled: true,
       fillColor: const Color(0xFFF7FAFC),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFDDE5EE)),
@@ -99,10 +96,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
             children: [
               const Text(
                 'Laporkan Masalah Lingkungan Laut',
-                style: TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -122,10 +116,9 @@ class _LaporanScreenState extends State<LaporanScreen> {
                   'Contoh: Sampah menumpuk di pantai',
                   Icons.edit_outlined,
                 ),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty
-                        ? 'Judul laporan wajib diisi'
-                        : null,
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Judul laporan wajib diisi'
+                    : null,
               ),
               const SizedBox(height: 20),
 
@@ -142,10 +135,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
                   Icons.category_outlined,
                 ),
                 items: kategoriList.map((item) {
-                  return DropdownMenuItem(
-                    value: item,
-                    child: Text(item),
-                  );
+                  return DropdownMenuItem(value: item, child: Text(item));
                 }).toList(),
                 onChanged: (value) {
                   setState(() => kategori = value);
@@ -165,10 +155,9 @@ class _LaporanScreenState extends State<LaporanScreen> {
                   'Jelaskan masalah yang ditemukan...',
                   Icons.description_outlined,
                 ),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty
-                        ? 'Deskripsi wajib diisi'
-                        : null,
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Deskripsi wajib diisi'
+                    : null,
               ),
               const SizedBox(height: 20),
 
@@ -183,10 +172,9 @@ class _LaporanScreenState extends State<LaporanScreen> {
                   'Contoh: Pantai Sulamadaha, Ternate',
                   Icons.location_on_outlined,
                 ),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty
-                        ? 'Lokasi wajib diisi'
-                        : null,
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Lokasi wajib diisi'
+                    : null,
               ),
               const SizedBox(height: 20),
 
@@ -212,9 +200,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(
-                      color: const Color(0xFFDDE5EE),
-                    ),
+                    border: Border.all(color: const Color(0xFFDDE5EE)),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -249,10 +235,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
                   icon: const Icon(Icons.send_outlined),
                   label: const Text(
                     'Kirim Laporan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: biruLaut,
