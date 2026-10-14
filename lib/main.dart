@@ -4,7 +4,8 @@ import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'pelapor/beranda_screen.dart';
-import 'pelapor/buat_laporan/laporan_screen.dart';
+import 'riwayat/riwayat_screen.dart';
+import 'profile/profile_screen.dart';
 
 void main() {
   runApp(const LautCareApp());
@@ -16,22 +17,19 @@ class LautCareApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LautCare',
       debugShowCheckedModeBanner: false,
+      title: 'LAUTCARE',
 
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF1565C0),
-      ),
-
+      // Aplikasi dimulai dari Splash Screen
       initialRoute: '/',
 
       routes: {
-        '/': (_) => const SplashScreen(),
-        '/login': (_) => const LoginScreen(),
-        '/register': (_) => const RegisterScreen(),
-        '/beranda': (_) => const BerandaScreen(),
-        '/laporan': (context) => const LaporanScreen(),
+        '/': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/beranda': (context) => const BerandaScreen(),
+        '/riwayat': (context) => const RiwayatScreen(),
+        '/profil': (context) => const ProfilScreen(),
       },
     );
   }

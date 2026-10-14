@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../akun_store.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -63,14 +65,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Setelah daftar, kembali ke halaman Login (bukan ke Beranda)
+  // Menyimpan akun sebelum kembali ke halaman Login
   void _daftar() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Akun berhasil dibuat, silakan login')),
-      );
-      Navigator.pop(context);
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
+
+    final berhasil = AkunStore.daftar(
+      nama: _nameCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      password: _passCtrl.text,
+    );
+
+    if (!berhasil) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email sudah terdaftar. Silakan login.')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Akun berhasil dibuat, silakan login.')),
+    );
+
+    Navigator.pop(context);
   }
 
   @override
@@ -80,10 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Stack(
         children: [
           // Ombak 3 lapis, sama dengan halaman Login
-          Positioned.fill(
-            child: CustomPaint(painter: _RegisterWavePainter()),
-          ),
-
+          Positioned.fill(child: CustomPaint(painter: _RegisterWavePainter())),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 190),
@@ -93,7 +108,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 10),
-
                     Row(
                       children: [
                         IconButton(
@@ -119,24 +133,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 6),
-
                     const Text(
                       'Bergabung untuk menjaga laut bersama',
                       style: TextStyle(fontSize: 13, color: Colors.grey),
                     ),
-
                     const SizedBox(height: 24),
 
                     _label('Nama Lengkap'),
                     const SizedBox(height: 6),
-
                     TextFormField(
                       controller: _nameCtrl,
                       decoration: _deco('Masukkan nama lengkap'),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'Nama lengkap wajib diisi';
                         }
                         return null;
@@ -144,16 +154,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     const SizedBox(height: 16),
-
                     _label('Email atau Nomor HP'),
                     const SizedBox(height: 6),
-
                     TextFormField(
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
                       decoration: _deco('contoh@email.com'),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'Email atau nomor HP wajib diisi';
                         }
                         return null;
@@ -161,10 +169,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     const SizedBox(height: 16),
-
                     _label('Password'),
                     const SizedBox(height: 6),
-
                     TextFormField(
                       controller: _passCtrl,
                       obscureText: _obscurePass,
@@ -199,10 +205,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     const SizedBox(height: 16),
-
                     _label('Konfirmasi Password'),
                     const SizedBox(height: 6),
-
                     TextFormField(
                       controller: _confirmPassCtrl,
                       obscureText: _obscureConfirm,
@@ -237,7 +241,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     const SizedBox(height: 28),
-
                     SizedBox(
                       width: double.infinity,
                       height: 46,
@@ -262,7 +265,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     const SizedBox(height: 20),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -304,15 +306,21 @@ class _RegisterWavePainter extends CustomPainter {
       final path = Path()..moveTo(0, start);
 
       path.cubicTo(
-        size.width * 0.20, start - amplitude,
-        size.width * 0.36, start + amplitude,
-        size.width * 0.55, start,
+        size.width * 0.20,
+        start - amplitude,
+        size.width * 0.36,
+        start + amplitude,
+        size.width * 0.55,
+        start,
       );
 
       path.cubicTo(
-        size.width * 0.75, start - amplitude,
-        size.width * 0.88, start + amplitude,
-        size.width, start - amplitude * 0.3,
+        size.width * 0.75,
+        start - amplitude,
+        size.width * 0.88,
+        start + amplitude,
+        size.width,
+        start - amplitude * 0.3,
       );
 
       path

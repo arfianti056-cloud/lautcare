@@ -15,7 +15,7 @@ class BerandaScreen extends StatelessWidget {
         title: Row(
           children: [
             Image.asset(
-              'assets/images/LautCare_Ocean_Wave_Logo-removebg-preview.png',
+              'assets/images/logo.png',
               width: 32,
               height: 32,
               fit: BoxFit.contain,
@@ -31,27 +31,13 @@ class BerandaScreen extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none, color: Colors.black87),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.person_outline, color: Colors.black87),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // =========================
-            // BANNER
-            // =========================
+            // BANNER BERANDA
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: SizedBox(
@@ -64,7 +50,6 @@ class BerandaScreen extends StatelessWidget {
                       'assets/images/benner_beranda.jpg',
                       fit: BoxFit.cover,
                     ),
-
                     Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
@@ -74,7 +59,6 @@ class BerandaScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const Positioned(
                       left: 15,
                       top: 15,
@@ -114,9 +98,7 @@ class BerandaScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // =========================
             // RINGKASAN LAPORAN
-            // =========================
             const Text(
               'Ringkasan Laporan',
               style: TextStyle(
@@ -125,7 +107,6 @@ class BerandaScreen extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-
             const SizedBox(height: 10),
 
             Row(
@@ -146,9 +127,7 @@ class BerandaScreen extends StatelessWidget {
 
             const SizedBox(height: 22),
 
-            // =========================
             // KATEGORI
-            // =========================
             const Text(
               'Kategori',
               style: TextStyle(
@@ -157,7 +136,6 @@ class BerandaScreen extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-
             const SizedBox(height: 10),
 
             SizedBox(
@@ -184,9 +162,7 @@ class BerandaScreen extends StatelessWidget {
 
             const SizedBox(height: 22),
 
-            // =========================
             // LAPORAN TERBARU
-            // =========================
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -198,13 +174,16 @@ class BerandaScreen extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
-                TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/riwayat');
+                  },
+                  child: const Text('Lihat Semua'),
+                ),
               ],
             ),
-
             const SizedBox(height: 8),
 
-            // BELUM ADA LAPORAN
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
@@ -240,49 +219,32 @@ class BerandaScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 22),
-
-            // =========================
-            // BUAT LAPORAN
-            // =========================
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/laporan');
-                },
-                icon: const Icon(Icons.add),
-                label: const Text(
-                  'Buat Laporan',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0878D1),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
 
-      // =========================
-      // BOTTOM NAVIGATION
-      // =========================
+      // NAVIGASI BAWAH
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: 0,
         selectedItemColor: const Color(0xFF0878D1),
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          if (index == 1) {
-            Navigator.pushNamed(context, '/laporan');
+          switch (index) {
+            case 0:
+              // Sudah berada di Beranda
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/laporan');
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/riwayat');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/profil');
+              break;
           }
         },
-
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -292,17 +254,12 @@ class BerandaScreen extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline),
             activeIcon: Icon(Icons.add_circle),
-            label: 'Lapor',
+            label: 'Buat Laporan',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
-            label: 'Riwayat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_none),
-            activeIcon: Icon(Icons.notifications),
-            label: 'Notifikasi',
+            label: 'Riwayat Laporan',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
@@ -314,9 +271,7 @@ class BerandaScreen extends StatelessWidget {
     );
   }
 
-  // =========================
-  // STAT CARD
-  // =========================
+  // KARTU RINGKASAN
   Widget _buildStatCard({required String title, required String value}) {
     return Container(
       height: 75,
@@ -344,9 +299,7 @@ class BerandaScreen extends StatelessWidget {
     );
   }
 
-  // =========================
-  // CATEGORY CARD
-  // =========================
+  // KARTU KATEGORI
   Widget _buildCategoryCard({required IconData icon, required String title}) {
     return Container(
       width: 130,

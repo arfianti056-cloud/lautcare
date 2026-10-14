@@ -1,5 +1,6 @@
-
 import 'package:flutter/material.dart';
+
+import '../akun_store.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,10 +38,30 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    Navigator.pushReplacementNamed(
-      context,
-      isAdmin ? '/admin' : '/beranda',
-    );
+    // Login untuk Pelapor
+    if (!isAdmin) {
+      final akun = AkunStore.login(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+
+      if (akun == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Akun belum terdaftar atau email/password salah. Silakan daftar terlebih dahulu.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      Navigator.pushReplacementNamed(context, '/beranda');
+      return;
+    }
+
+    // Login Admin menggunakan alur lama
+    Navigator.pushReplacementNamed(context, '/admin');
   }
 
   void register() {
@@ -53,11 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: LoginWavePainter(),
-            ),
-          ),
+          Positioned.fill(child: CustomPaint(painter: LoginWavePainter())),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -125,10 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
           isAdmin
               ? 'Masuk untuk mengakses panel admin LautCare'
               : 'Masuk untuk melanjutkan',
-          style: const TextStyle(
-            fontSize: 15,
-            color: Color(0xFF557894),
-          ),
+          style: const TextStyle(fontSize: 15, color: Color(0xFF557894)),
         ),
 
         const SizedBox(height: 30),
@@ -171,10 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: const Text(
               'Login',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -194,10 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onTap: register,
                   child: const Text(
                     'Daftar di sini',
-                    style: TextStyle(
-                      color: blue,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(color: blue, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -211,10 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(child: Divider(color: lightBlue)),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 14),
-                child: Text(
-                  'atau',
-                  style: TextStyle(color: Color(0xFF557894)),
-                ),
+                child: Text('atau', style: TextStyle(color: Color(0xFF557894))),
               ),
               Expanded(child: Divider(color: lightBlue)),
             ],
@@ -229,9 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text(
-                      'Login Google belum diintegrasikan.',
-                    ),
+                    content: Text('Login Google belum diintegrasikan.'),
                   ),
                 );
               },
@@ -250,10 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const Center(
             child: Text(
               'Khusus untuk admin LautCare',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF557894),
-              ),
+              style: TextStyle(fontSize: 12, color: Color(0xFF557894)),
             ),
           ),
         ],
@@ -320,15 +320,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextField(
       controller: controller,
       obscureText: password && hidePassword,
-      keyboardType: password
-          ? TextInputType.text
-          : TextInputType.emailAddress,
+      keyboardType: password ? TextInputType.text : TextInputType.emailAddress,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-          fontSize: 14,
-          color: Color(0xFFB0BEC5),
-        ),
+        hintStyle: const TextStyle(fontSize: 14, color: Color(0xFFB0BEC5)),
         prefixIcon: Icon(icon, color: const Color(0xFF6A88AD)),
         suffixIcon: password
             ? IconButton(
@@ -369,15 +364,21 @@ class LoginWavePainter extends CustomPainter {
       final path = Path()..moveTo(0, start);
 
       path.cubicTo(
-        size.width * 0.20, start - amplitude,
-        size.width * 0.36, start + amplitude,
-        size.width * 0.55, start,
+        size.width * 0.20,
+        start - amplitude,
+        size.width * 0.36,
+        start + amplitude,
+        size.width * 0.55,
+        start,
       );
 
       path.cubicTo(
-        size.width * 0.75, start - amplitude,
-        size.width * 0.88, start + amplitude,
-        size.width, start - amplitude * 0.3,
+        size.width * 0.75,
+        start - amplitude,
+        size.width * 0.88,
+        start + amplitude,
+        size.width,
+        start - amplitude * 0.3,
       );
 
       path
@@ -388,23 +389,9 @@ class LoginWavePainter extends CustomPainter {
       canvas.drawPath(path, Paint()..color = color);
     }
 
-    drawWave(
-      size.height * 0.76,
-      35,
-      const Color(0xFFE0F6FF),
-    );
-
-    drawWave(
-      size.height * 0.83,
-      35,
-      const Color(0xFFB7E9FA),
-    );
-
-    drawWave(
-      size.height * 0.91,
-      30,
-      const Color(0xFF54C5F0),
-    );
+    drawWave(size.height * 0.76, 35, const Color(0xFFE0F6FF));
+    drawWave(size.height * 0.83, 35, const Color(0xFFB7E9FA));
+    drawWave(size.height * 0.91, 30, const Color(0xFF54C5F0));
   }
 
   @override

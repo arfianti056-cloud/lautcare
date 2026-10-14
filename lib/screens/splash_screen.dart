@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -34,10 +35,12 @@ class _SplashScreenState extends State<SplashScreen> {
         fit: StackFit.expand,
         children: [
           // Foto pantai, digelapkan sedikit agar tulisan terbaca
-          Image.asset('assets/images/splash.jpeg',
-              fit: BoxFit.cover,
-              color: Colors.black38,
-              colorBlendMode: BlendMode.darken),
+          Image.asset(
+            'assets/images/splash.jpeg',
+            fit: BoxFit.cover,
+            color: Colors.black38,
+            colorBlendMode: BlendMode.darken,
+          ),
           Align(
             alignment: const Alignment(0, -0.3),
             child: Column(
@@ -48,15 +51,16 @@ class _SplashScreenState extends State<SplashScreen> {
                   backgroundColor: Colors.white,
                   child: Padding(
                     padding: const EdgeInsets.all(14),
-                    child: Image.asset(
-                        'assets/images/LautCare_Ocean_Wave_Logo-removebg-preview.png'),
+                    child: Image.asset('assets/images/logo.png'),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text('LautCare', style: putih.copyWith(fontSize: 34)),
                 const SizedBox(height: 6),
-                Text('Jaga Laut, Jaga Masa Depan',
-                    style: putih.copyWith(fontSize: 14)),
+                Text(
+                  'Jaga Laut, Jaga Masa Depan',
+                  style: putih.copyWith(fontSize: 14),
+                ),
               ],
             ),
           ),
