@@ -5,6 +5,21 @@ class BerandaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ambil nama yang dikirim dari halaman login.
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+
+    String namaPengguna = 'Pengguna';
+
+    if (arguments is Map) {
+      final nama = arguments['name'];
+
+      if (nama is String && nama.trim().isNotEmpty) {
+        namaPengguna = nama.trim();
+      }
+    } else if (arguments is String && arguments.trim().isNotEmpty) {
+      namaPengguna = arguments.trim();
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -59,15 +74,15 @@ class BerandaScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Positioned(
+                    Positioned(
                       left: 15,
                       top: 15,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Halo, Pengguna 👋',
-                            style: TextStyle(
+                            'Halo, $namaPengguna 👋',
+                            style: const TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -76,8 +91,8 @@ class BerandaScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          SizedBox(height: 3),
-                          Text(
+                          const SizedBox(height: 3),
+                          const Text(
                             'Peduli Laut, Mulai dari Kita',
                             style: TextStyle(
                               fontSize: 11,
@@ -232,7 +247,6 @@ class BerandaScreen extends StatelessWidget {
         onTap: (index) {
           switch (index) {
             case 0:
-              // Sudah berada di Beranda
               break;
             case 1:
               Navigator.pushNamed(context, '/laporan');

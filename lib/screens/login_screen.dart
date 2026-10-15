@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
-import '../akun_store.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool isAdmin = false;
   bool hidePassword = true;
+  bool isLoading = false;
 
   static const blue = Color(0xFF0878D1);
   static const navy = Color(0xFF154B79);
@@ -27,7 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void login() {
+  Future<void> login() async {
+    if (isLoading) return;
+
     if (emailController.text.trim().isEmpty ||
         passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -38,30 +42,104 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Login untuk Pelapor
-    if (!isAdmin) {
-      final akun = AkunStore.login(
-        email: emailController.text.trim(),
-        password: passwordController.text,
-      );
-
-      if (akun == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Akun belum terdaftar atau email/password salah. Silakan daftar terlebih dahulu.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      Navigator.pushReplacementNamed(context, '/beranda');
+    // Login Admin tetap menggunakan alur lama.
+    if (isAdmin) {
+      Navigator.pushReplacementNamed(context, '/admin');
       return;
     }
 
-    // Login Admin menggunakan alur lama
-    Navigator.pushReplacementNamed(context, '/admin');
+    setState(() => isLoading = true);
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('http://192.168.43.67:8000/api/login'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'email': emailController.text.trim(),
+              'password': passwordController.text,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      dynamic decoded;
+
+      try {
+        decoded = jsonDecode(response.body);
+      } catch (_) {
+        decoded = null;
+      }
+
+      final data = decoded is Map<String, dynamic>
+          ? decoded
+          : <String, dynamic>{};
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        // Ambil nama pengguna dari respons API Laravel.
+        final user = data['user'];
+
+        String nama = '';
+
+        if (user is Map) {
+          nama = user['name']?.toString() ?? '';
+        }
+
+        // Cadangan jika nama dikirim langsung di dalam respons.
+        if (nama.trim().isEmpty) {
+          nama = data['name']?.toString() ?? '';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login berhasil. Selamat datang di LAUTCARE!'),
+          ),
+        );
+
+        // Kirim nama pengguna ke halaman beranda.
+        Navigator.pushReplacementNamed(
+          context,
+          '/beranda',
+          arguments: {'name': nama},
+        );
+      } else {
+        String pesan =
+            data['message']?.toString() ??
+            'Login gagal. Periksa kembali email dan password kamu.';
+
+        final errors = data['errors'];
+
+        if (errors is Map && errors.isNotEmpty) {
+          final firstError = errors.values.first;
+
+          if (firstError is List && firstError.isNotEmpty) {
+            pesan = firstError.first.toString();
+          }
+        }
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(pesan)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tidak dapat menghubungi server. '
+            'Periksa jaringan dan server Laravel.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
   }
 
   void register() {
@@ -99,7 +177,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Pilihan Pelapor dan Admin
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
@@ -124,9 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
-
         const SizedBox(height: 30),
-
         Text(
           isAdmin ? 'Login Admin' : 'Selamat datang kembali',
           style: const TextStyle(
@@ -135,46 +210,36 @@ class _LoginScreenState extends State<LoginScreen> {
             color: navy,
           ),
         ),
-
         const SizedBox(height: 8),
-
         Text(
           isAdmin
               ? 'Masuk untuk mengakses panel admin LautCare'
               : 'Masuk untuk melanjutkan',
           style: const TextStyle(fontSize: 15, color: Color(0xFF557894)),
         ),
-
         const SizedBox(height: 30),
-
         _label(isAdmin ? 'Username atau Email' : 'Email atau Nomor HP'),
         const SizedBox(height: 9),
-
         _input(
           controller: emailController,
           hint: isAdmin ? 'Masukkan username atau email' : 'contoh@email.com',
           icon: isAdmin ? Icons.person_outline : Icons.mail_outline,
         ),
-
         const SizedBox(height: 22),
-
         _label('Password'),
         const SizedBox(height: 9),
-
         _input(
           controller: passwordController,
           hint: 'Masukkan password',
           icon: Icons.lock_outline,
           password: true,
         ),
-
         const SizedBox(height: 26),
-
         SizedBox(
           width: double.infinity,
           height: 54,
           child: ElevatedButton(
-            onPressed: login,
+            onPressed: isLoading ? null : login,
             style: ElevatedButton.styleFrom(
               backgroundColor: blue,
               foregroundColor: Colors.white,
@@ -183,16 +248,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Login',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            child: isLoading
+                ? const SizedBox(
+                    width: 23,
+                    height: 23,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Login',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
           ),
         ),
-
         if (!isAdmin) ...[
           const SizedBox(height: 20),
-
           Center(
             child: Wrap(
               alignment: WrapAlignment.center,
@@ -211,9 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           const Row(
             children: [
               Expanded(child: Divider(color: lightBlue)),
@@ -224,9 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Expanded(child: Divider(color: lightBlue)),
             ],
           ),
-
           const SizedBox(height: 18),
-
           SizedBox(
             width: double.infinity,
             height: 50,

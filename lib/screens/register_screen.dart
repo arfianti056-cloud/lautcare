@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
-import '../akun_store.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePass = true;
   bool _obscureConfirm = true;
+  bool _isLoading = false;
 
   // Warna disamakan dengan halaman Login
   static const _navy = Color(0xFF154B79);
@@ -58,37 +60,90 @@ class _RegisterScreenState extends State<RegisterScreen> {
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: _blue),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+        borderSide: BorderSide(color: _blue),
       ),
     );
   }
 
-  // Menyimpan akun sebelum kembali ke halaman Login
-  void _daftar() {
+  // Register melalui REST API Laravel
+  Future<void> _daftar() async {
+    if (_isLoading) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final berhasil = AkunStore.daftar(
-      nama: _nameCtrl.text.trim(),
-      email: _emailCtrl.text.trim(),
-      password: _passCtrl.text,
-    );
+    setState(() {
+      _isLoading = true;
+    });
 
-    if (!berhasil) {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('http://192.168.43.67:8000/api/register'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'name': _nameCtrl.text.trim(),
+              'email': _emailCtrl.text.trim(),
+              'password': _passCtrl.text,
+              'password_confirmation': _confirmPassCtrl.text,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      final dynamic decoded = jsonDecode(response.body);
+      final Map<String, dynamic> data = decoded is Map<String, dynamic>
+          ? decoded
+          : {};
+
+      if (!mounted) return;
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Akun berhasil dibuat, silakan login.')),
+        );
+
+        Navigator.pop(context);
+      } else {
+        String pesan =
+            data['message']?.toString() ??
+            'Registrasi gagal. Periksa kembali data kamu.';
+
+        final errors = data['errors'];
+
+        if (errors is Map && errors.isNotEmpty) {
+          final firstError = errors.values.first;
+
+          if (firstError is List && firstError.isNotEmpty) {
+            pesan = firstError.first.toString();
+          }
+        }
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(pesan)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email sudah terdaftar. Silakan login.')),
+        const SnackBar(
+          content: Text(
+            'Gagal terhubung ke server. Periksa jaringan dan server Laravel.',
+          ),
+        ),
       );
-      return;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Akun berhasil dibuat, silakan login.')),
-    );
-
-    Navigator.pop(context);
   }
 
   @override
@@ -164,6 +219,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         if (value == null || value.trim().isEmpty) {
                           return 'Email atau nomor HP wajib diisi';
                         }
+
+                        final email = value.trim();
+                        final emailValid = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(email);
+
+                        if (!emailValid) {
+                          return 'Masukkan alamat email yang valid';
+                        }
+
                         return null;
                       },
                     ),
@@ -196,8 +260,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           return 'Password wajib diisi';
                         }
 
-                        if (value.length < 6) {
-                          return 'Password minimal 6 karakter';
+                        if (value.length < 8) {
+                          return 'Password minimal 8 karakter';
                         }
 
                         return null;
@@ -245,7 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       width: double.infinity,
                       height: 46,
                       child: ElevatedButton(
-                        onPressed: _daftar,
+                        onPressed: _isLoading ? null : _daftar,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _blue,
                           elevation: 0,
@@ -253,14 +317,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
-                          'Daftar',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Daftar',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
 
