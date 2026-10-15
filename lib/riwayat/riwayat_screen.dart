@@ -12,10 +12,9 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
   String _selectedCategory = 'Semua';
 
   // State awal: Kosong (belum ada laporan yang dibuat)
-  // Nanti jika ada data dari database/API, data tersebut tinggal di-push ke list ini
+  // Contoh data ketika nanti ada laporan masuk disiapkan di komentar bawah
   final List<Map<String, String>> _reports = [
     /*
-    // CONTOH STRUKTUR DATA JIKA NANTI ADA LAPORAN MASUK:
     {
       'title': 'Sampah di Pantai Falajawa',
       'location': '12 Mei | Pesisir',
@@ -27,20 +26,20 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
       'title': 'Pencemaran di Teluk Ternate',
       'location': '10 Mei | Jalan Laut',
       'date': '10 Mei 2025',
-      'status': 'Diverifikasi',
+      'status': 'Diproses',
       'image': 'https://picsum.photos/200/200?random=2',
     },
     {
       'title': 'Kerusakan Terumbu Karang',
       'location': '3 Mei | Mangkubumi',
       'date': '3 Mei 2025',
-      'status': 'Diproses',
+      'status': 'Selesai',
       'image': 'https://picsum.photos/200/200?random=3',
     },
     */
   ];
 
-  // Getter Logika Filtering (Tetap dipertahankan untuk menyaring data ketika laporan masuk)
+  // Getter Logika Filtering untuk 4 Kategori
   List<Map<String, String>> get _filteredReports {
     if (_selectedCategory == 'Semua') {
       return _reports;
@@ -54,6 +53,8 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
           .toList();
     } else if (_selectedCategory == 'Diproses') {
       return _reports.where((item) => item['status'] == 'Diproses').toList();
+    } else if (_selectedCategory == 'Selesai') {
+      return _reports.where((item) => item['status'] == 'Selesai').toList();
     }
     return _reports;
   }
@@ -103,7 +104,7 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
       ),
       body: Column(
         children: [
-          // Header Search Bar & Filter Chips (Selalu Tampil)
+          // Header Search Bar & 4 Pilihan Filter Chips
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -136,6 +137,8 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
                       _buildFilterChip('Terverifikasi'),
                       const SizedBox(width: 8),
                       _buildFilterChip('Diproses'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Selesai'),
                     ],
                   ),
                 ),
@@ -143,7 +146,7 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
             ),
           ),
 
-          // Tampilan Konten Dinamis
+          // Tampilan Konten Dinamis (Kosong vs Berisi)
           Expanded(
             child: displayReports.isEmpty
                 ? Center(
