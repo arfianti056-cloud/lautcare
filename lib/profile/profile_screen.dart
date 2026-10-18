@@ -146,9 +146,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-            },
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Batal'),
           ),
           ElevatedButton(
@@ -219,12 +217,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
         tampilkanInfo('Lapor', 'Hubungkan menu ini ke halaman laporan.');
         break;
       case 2:
-        tampilkanInfo('Panduan', 'Panduan LautCare.');
-        break;
-      case 3:
         Navigator.pushNamed(context, '/riwayat');
         break;
-      case 4:
+      case 3:
+        // Sudah berada di halaman Profil.
         break;
     }
   }
@@ -301,6 +297,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
             const SizedBox(height: 5),
 
+            // Email pengguna
             Text(
               emailController.text,
               textAlign: TextAlign.center,
@@ -309,13 +306,14 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
             const SizedBox(height: 28),
 
-            // Menu profil
+            // Menu Edit Profil
             menuProfil(
               ikon: Icons.edit_outlined,
               judul: 'Edit Profil',
               aksi: editProfil,
             ),
 
+            // Menu Ubah Password
             menuProfil(
               ikon: Icons.lock_outline,
               judul: 'Ubah Password',
@@ -324,6 +322,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
             const SizedBox(height: 8),
 
+            // Menu Tentang LautCare
             menuProfil(
               ikon: Icons.info_outline,
               judul: 'Tentang LautCare',
@@ -337,6 +336,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
               },
             ),
 
+            // Menu Keluar
             menuProfil(
               ikon: Icons.logout,
               judul: 'Keluar',
@@ -346,8 +346,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
           ],
         ),
       ),
+
+      // Navigasi bawah tanpa menu Panduan
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 4,
+        currentIndex: 3,
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: biru,
@@ -362,10 +364,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
             label: 'Beranda',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Lapor'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
-            label: 'Panduan',
-          ),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
