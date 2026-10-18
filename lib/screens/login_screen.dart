@@ -1,7 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:lautcare/services/aut_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,8 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     if (isLoading) return;
 
-    if (emailController.text.trim().isEmpty ||
-        passwordController.text.isEmpty) {
+    final inputEmail = emailController.text.trim();
+    final inputPassword = passwordController.text;
+
+    if (inputEmail.isEmpty || inputPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Email/username dan password harus diisi'),
@@ -42,87 +42,64 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Login Admin tetap menggunakan alur lama.
-    if (isAdmin) {
-      Navigator.pushReplacementNamed(context, '/admin');
-      return;
-    }
-
     setState(() => isLoading = true);
 
     try {
-      final response = await http
-          .post(
-            Uri.parse('http://192.168.43.67:8000/api/login'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'email': emailController.text.trim(),
-              'password': passwordController.text,
-            }),
-          )
-          .timeout(const Duration(seconds: 20));
-
-      dynamic decoded;
-
-      try {
-        decoded = jsonDecode(response.body);
-      } catch (_) {
-        decoded = null;
-      }
-
-      final data = decoded is Map<String, dynamic>
-          ? decoded
-          : <String, dynamic>{};
+      // Menghubungkan ke API Laravel melalui AutService
+      final result = await AutService.login(inputEmail, inputPassword);
 
       if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        // Ambil nama pengguna dari respons API Laravel.
-        final user = data['user'];
-
+      if (result['success'] == true) {
+        final userData = result['user'];
         String nama = '';
+        String role = 'pelapor';
 
-        if (user is Map) {
-          nama = user['name']?.toString() ?? '';
+        if (userData is Map) {
+          nama = userData['name']?.toString() ?? '';
+          role = userData['role']?.toString() ?? 'pelapor';
         }
 
-        // Cadangan jika nama dikirim langsung di dalam respons.
         if (nama.trim().isEmpty) {
-          nama = data['name']?.toString() ?? '';
+          nama = result['name']?.toString() ?? '';
         }
 
+        // Pengecekan Login Mode Admin vs Pelapor
+        if (isAdmin) {
+          if (role.toLowerCase() == 'admin') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Login Admin berhasil. Memuat dashboard...'),
+              ),
+            );
+            Navigator.pushReplacementNamed(context, '/admin');
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Akses ditolak: Akun ini bukan akun admin.'),
+              ),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login berhasil. Selamat datang di LAUTCARE!'),
+            ),
+          );
+          Navigator.pushReplacementNamed(
+            context,
+            '/beranda',
+            arguments: {'name': nama},
+          );
+        }
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login berhasil. Selamat datang di LAUTCARE!'),
+          SnackBar(
+            content: Text(
+              result['message'] ?? 'Login gagal. Periksa kembali email dan password.',
+            ),
           ),
         );
-
-        // Kirim nama pengguna ke halaman beranda.
-        Navigator.pushReplacementNamed(
-          context,
-          '/beranda',
-          arguments: {'name': nama},
-        );
-      } else {
-        String pesan =
-            data['message']?.toString() ??
-            'Login gagal. Periksa kembali email dan password kamu.';
-
-        final errors = data['errors'];
-
-        if (errors is Map && errors.isNotEmpty) {
-          final firstError = errors.values.first;
-
-          if (firstError is List && firstError.isNotEmpty) {
-            pesan = firstError.first.toString();
-          }
-        }
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(pesan)));
       }
     } catch (e) {
       if (!mounted) return;
@@ -130,8 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Tidak dapat menghubungi server. '
-            'Periksa jaringan dan server Laravel.',
+            'Tidak dapat menghubungi server. Periksa jaringan dan server Laravel.',
           ),
         ),
       );
@@ -157,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 190),
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 80),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 650),
@@ -177,6 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Tab Switcher Pelapor / Admin
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
@@ -313,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('G  Login dengan Google'),
+              child: const Text('G   Login dengan Google'),
             ),
           ),
         ] else ...[
