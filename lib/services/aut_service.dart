@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+
 class AutService {
   // Sesuaikan URL base API Laravel kamu (contoh menggunakan IP lokal/localhost)
   // Catatan: Jika menggunakan emulator Android, localhost biasanya '10.0.2.2'

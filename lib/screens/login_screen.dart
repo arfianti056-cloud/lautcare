@@ -67,12 +67,31 @@ class _LoginScreenState extends State<LoginScreen> {
         // Pengecekan Login Mode Admin vs Pelapor
         if (isAdmin) {
           if (role.toLowerCase() == 'admin') {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Login Admin berhasil. Memuat dashboard...'),
-              ),
-            );
-            Navigator.pushReplacementNamed(context, '/admin');
+            
+           
+final token = result['token']?.toString() ?? '';
+
+    if (token.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Token login tidak ditemukan.'),
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Login Admin berhasil. Memuat dashboard...'),
+      ),
+    );
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/admin',
+      arguments: {'token': token},
+    );
+
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
