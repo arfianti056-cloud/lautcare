@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:lautcare/services/aut_service.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
   static const navy = Color(0xFF154B79);
   static const lightBlue = Color(0xFFD9E8F5);
 
+  // Samakan alamat ini dengan alamat server Laravel kamu.
+  static const String baseUrl = 'http://10.186.187.67:8000/api';
+
   @override
   void dispose() {
     emailController.dispose();
@@ -36,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (inputEmail.isEmpty || inputPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Email/username dan password harus diisi'),
+          content: Text('Email/username dan password harus diisi.'),
         ),
       );
       return;
@@ -45,90 +51,152 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => isLoading = true);
 
     try {
-      // Menghubungkan ke API Laravel melalui AutService
-      final result = await AutService.login(inputEmail, inputPassword);
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/login'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({'email': inputEmail, 'password': inputPassword}),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      dynamic decoded;
+
+      try {
+        decoded = jsonDecode(response.body);
+      } catch (_) {
+        decoded = null;
+      }
+
+      final data = decoded is Map
+          ? Map<String, dynamic>.from(decoded)
+          : <String, dynamic>{};
 
       if (!mounted) return;
 
-      if (result['success'] == true) {
-        final userData = result['user'];
-        String nama = '';
-        String role = 'pelapor';
+      if (response.statusCode == 200) {
+        // Mendukung respons dengan token di bagian utama
+        // atau di dalam objek data.
+        final responseData = data['data'] is Map
+            ? Map<String, dynamic>.from(data['data'] as Map)
+            : <String, dynamic>{};
 
-        if (userData is Map) {
-          nama = userData['name']?.toString() ?? '';
-          role = userData['role']?.toString() ?? 'pelapor';
-        }
+        final token =
+            (data['token'] ?? responseData['token'])?.toString().trim() ?? '';
 
-        if (nama.trim().isEmpty) {
-          nama = result['name']?.toString() ?? '';
-        }
-
-        // Pengecekan Login Mode Admin vs Pelapor
-        if (isAdmin) {
-          if (role.toLowerCase() == 'admin') {
-            
-           
-final token = result['token']?.toString() ?? '';
-
-    if (token.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Token login tidak ditemukan.'),
-        ),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Login Admin berhasil. Memuat dashboard...'),
-      ),
-    );
-
-    Navigator.pushReplacementNamed(
-      context,
-      '/admin',
-      arguments: {'token': token},
-    );
-
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Akses ditolak: Akun ini bukan akun admin.'),
-              ),
-            );
-          }
-        } else {
+        if (token.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Login berhasil. Selamat datang di LAUTCARE!'),
+              content: Text(
+                'Token login tidak ditemukan. Periksa respons API Laravel.',
+              ),
+              duration: Duration(seconds: 5),
             ),
           );
-          Navigator.pushReplacementNamed(
-            context,
-            '/beranda',
-            arguments: {'name': nama},
-          );
+          return;
         }
-      } else {
+
+        // Mengambil informasi pengguna dari respons Laravel.
+        final userRaw = data['user'] ?? responseData['user'];
+        final user = userRaw is Map
+            ? Map<String, dynamic>.from(userRaw)
+            : <String, dynamic>{};
+
+        final role =
+            (user['role'] ?? data['role'] ?? responseData['role'] ?? 'pelapor')
+                .toString()
+                .toLowerCase();
+
+        var nama =
+            (user['name'] ??
+                    user['nama'] ??
+                    data['name'] ??
+                    responseData['name'] ??
+                    inputEmail)
+                .toString()
+                .trim();
+
+        if (nama.isEmpty) {
+          nama = inputEmail;
+        }
+
+        // Admin hanya boleh masuk menggunakan akun admin.
+        if (isAdmin && role != 'admin') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Akses ditolak: Akun ini bukan akun admin.'),
+            ),
+          );
+          return;
+        }
+
+        // Simpan token dan nama pengguna.
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.setString('lautcare_token', token);
+        await prefs.setString('lautcare_name', nama);
+
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              result['message'] ?? 'Login gagal. Periksa kembali email dan password.',
+              isAdmin
+                  ? 'Login Admin berhasil. Memuat dashboard...'
+                  : 'Login berhasil. Selamat datang di LAUTCARE!',
             ),
           ),
         );
+
+        if (isAdmin) {
+          Navigator.pushReplacementNamed(
+            context,
+            '/admin',
+            arguments: {'token': token},
+          );
+        } else {
+          Navigator.pushReplacementNamed(
+            context,
+            '/beranda',
+            arguments: {'name': nama, 'token': token},
+          );
+        }
+      } else {
+        var pesan =
+            data['message']?.toString() ??
+            'Login gagal. Periksa kembali email dan password kamu.';
+
+        final errors = data['errors'];
+
+        if (errors is Map && errors.isNotEmpty) {
+          final firstError = errors.values.first;
+
+          if (firstError is List && firstError.isNotEmpty) {
+            pesan = firstError.first.toString();
+          }
+        }
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(pesan)));
       }
-    } catch (e) {
+    } on http.ClientException {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Tidak dapat menghubungi server. Periksa jaringan dan server Laravel.',
+            'Tidak dapat menghubungi server. '
+            'Periksa jaringan dan server Laravel.',
           ),
         ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan saat login: $e')),
       );
     } finally {
       if (mounted) {
