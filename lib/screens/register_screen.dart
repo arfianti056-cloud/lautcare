@@ -82,7 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final response = await http
           .post(
-            Uri.parse('http://10.186.187.67:8000/api/register'),
+            Uri.parse('http://10.11.108.67:8000/api/register'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
@@ -217,7 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: _deco('contoh@email.com'),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Email atau nomor HP wajib diisi';
+                          return 'Email wajib diisi';
                         }
 
                         final email = value.trim();

@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   static const lightBlue = Color(0xFFD9E8F5);
 
   // Samakan alamat ini dengan alamat server Laravel kamu.
-  static const String baseUrl = 'http://10.186.187.67:8000/api';
+  static const String baseUrl = 'http://10.11.108.67:8000/api';
 
   @override
   void dispose() {
@@ -282,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: const TextStyle(fontSize: 15, color: Color(0xFF557894)),
         ),
         const SizedBox(height: 30),
-        _label(isAdmin ? 'Username atau Email' : 'Email atau Nomor HP'),
+        _label(isAdmin ? 'Username atau Email' : 'Email'),
         const SizedBox(height: 9),
         _input(
           controller: emailController,

@@ -11,7 +11,7 @@ class BerandaScreen extends StatefulWidget {
 }
 
 class _BerandaScreenState extends State<BerandaScreen> {
-  static const String baseUrl = 'http://10.186.187.67:8000/api';
+  static const String baseUrl = 'http://10.11.108.67:8000/api';
 
   String namaPengguna = 'Pengguna';
   String token = '';
@@ -81,12 +81,29 @@ class _BerandaScreenState extends State<BerandaScreen> {
         if (hasil is Map && hasil['data'] is List) {
           final data = hasil['data'] as List;
 
-          setState(() {
-            daftarLaporan = data
-                .whereType<Map>()
-                .map((item) => Map<String, dynamic>.from(item))
-                .toList();
+          // Mengurutkan laporan dari yang terbaru.
+          final laporanTerurut = data
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
 
+          laporanTerurut.sort((a, b) {
+            final tanggalA = DateTime.tryParse(
+              (a['created_at'] ?? '').toString(),
+            );
+            final tanggalB = DateTime.tryParse(
+              (b['created_at'] ?? '').toString(),
+            );
+
+            if (tanggalA == null && tanggalB == null) return 0;
+            if (tanggalA == null) return 1;
+            if (tanggalB == null) return -1;
+
+            return tanggalB.compareTo(tanggalA);
+          });
+
+          setState(() {
+            daftarLaporan = laporanTerurut;
             sedangMemuat = false;
           });
         } else {
@@ -417,7 +434,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         currentIndex: 0,
         selectedItemColor: const Color(0xFF0878D1),
         unselectedItemColor: Colors.grey,
-        onTap: (index) {
+        onTap: (index) async {
           switch (index) {
             case 0:
               break;
@@ -434,11 +451,15 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 return;
               }
 
-              Navigator.pushNamed(
+              final hasil = await Navigator.pushNamed(
                 context,
                 '/laporan',
                 arguments: {'token': token},
               );
+
+              if (hasil == true && mounted) {
+                await ambilLaporan();
+              }
               break;
 
             case 2:

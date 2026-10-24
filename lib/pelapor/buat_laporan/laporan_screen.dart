@@ -23,7 +23,7 @@ class _LaporanScreenState extends State<LaporanScreen> {
   final ImagePicker _picker = ImagePicker();
 
   // Sesuaikan dengan IP laptop yang menjalankan Laravel.
-  static const String baseUrl = 'http://10.186.187.67:8000/api';
+  static const String baseUrl = 'http://10.11.108.67:8000/api';
 
   static const Color biruLaut = Color(0xFF087BD1);
 

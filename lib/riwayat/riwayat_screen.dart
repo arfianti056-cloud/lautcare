@@ -11,7 +11,8 @@ class RiwayatScreen extends StatefulWidget {
 }
 
 class _RiwayatScreenState extends State<RiwayatScreen> {
-  static const String baseUrl = 'http://10.186.187.67:8000/api';
+  static const String baseUrl = 'http://10.11.108.67:8000/api';
+  static const String storageUrl = 'http://10.11.108.67:8000/storage/';
 
   int _selectedIndex = 2;
   String _selectedCategory = 'Semua';
@@ -23,6 +24,7 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
 
   bool _isLoading = true;
   String? _errorMessage;
+  bool _alreadyCheckedArguments = false;
 
   final List<String> _filters = [
     'Semua',
@@ -49,8 +51,6 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
       _loadReports();
     }
   }
-
-  bool _alreadyCheckedArguments = false;
 
   @override
   void dispose() {
@@ -91,24 +91,24 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
         if (result is Map && result['data'] is List) {
           final data = result['data'] as List;
 
+          final reports = data
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+
+          reports.sort((a, b) {
+            final dateA = DateTime.tryParse('${a['created_at'] ?? ''}');
+            final dateB = DateTime.tryParse('${b['created_at'] ?? ''}');
+
+            if (dateA == null && dateB == null) return 0;
+            if (dateA == null) return 1;
+            if (dateB == null) return -1;
+
+            return dateB.compareTo(dateA);
+          });
+
           setState(() {
-            _reports = data
-                .whereType<Map>()
-                .map((item) => Map<String, dynamic>.from(item))
-                .toList();
-
-            // Urutkan laporan dari yang terbaru.
-            _reports.sort((a, b) {
-              final dateA = DateTime.tryParse('${a['created_at'] ?? ''}');
-              final dateB = DateTime.tryParse('${b['created_at'] ?? ''}');
-
-              if (dateA == null && dateB == null) return 0;
-              if (dateA == null) return 1;
-              if (dateB == null) return -1;
-
-              return dateB.compareTo(dateA);
-            });
-
+            _reports = reports;
             _isLoading = false;
           });
         } else {
@@ -136,6 +136,8 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
         _isLoading = false;
         _errorMessage = 'Tidak dapat terhubung ke server Laravel.';
       });
+
+      debugPrint('ERROR MEMUAT LAPORAN: $e');
     }
   }
 
@@ -187,6 +189,34 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
       default:
         return status.isEmpty ? 'Belum diketahui' : status;
     }
+  }
+
+  // Membuat URL foto berdasarkan nilai yang diterima dari Laravel.
+  String? _photoUrl(Map<String, dynamic> report) {
+    final rawPath = report['foto']?.toString().trim();
+
+    if (rawPath == null || rawPath.isEmpty || rawPath == 'null') {
+      return null;
+    }
+
+    // Jika Laravel mengirim URL lengkap, gunakan URL tersebut.
+    if (rawPath.startsWith('http://') || rawPath.startsWith('https://')) {
+      return rawPath;
+    }
+
+    // Jika path diawali /storage/, jangan menambahkan /storage/ dua kali.
+    if (rawPath.startsWith('/storage/')) {
+      return 'http://10.11.108.67:8000$rawPath';
+    }
+
+    if (rawPath.startsWith('storage/')) {
+      return 'http://10.11.108.67:8000/$rawPath';
+    }
+
+    // Menghapus garis miring di awal agar URL tidak menjadi ganda.
+    final cleanPath = rawPath.replaceFirst(RegExp(r'^/+'), '');
+
+    return '$storageUrl$cleanPath';
   }
 
   List<Map<String, dynamic>> get _filteredReports {
@@ -358,9 +388,7 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: displayReports.length,
                       itemBuilder: (context, index) {
-                        final item = displayReports[index];
-
-                        return _buildReportCard(item);
+                        return _buildReportCard(displayReports[index]);
                       },
                     ),
                   ),
@@ -422,14 +450,11 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
   }
 
   Widget _buildReportCard(Map<String, dynamic> item) {
-    final photoPath = item['foto']?.toString();
-    final photoUrl = photoPath != null && photoPath.isNotEmpty
-        ? 'http://10.186.187.67:8000/storage/$photoPath'
-        : null;
-    debugPrint('PATH FOTO: $photoPath');
-    debugPrint('URL FOTO: $photoUrl');
-
+    final photoUrl = _photoUrl(item);
     final status = _status(item);
+
+    debugPrint('PATH FOTO: ${item['foto']}');
+    debugPrint('URL FOTO: $photoUrl');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -448,15 +473,31 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: photoUrl == null
-                    ? _photoPlaceholder()
-                    : Image.network(
-                        photoUrl,
-                        width: 70,
-                        height: 70,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _photoPlaceholder(),
-                      ),
+                child: SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: photoUrl == null
+                      ? _photoPlaceholder()
+                      : Image.network(
+                          photoUrl,
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
+                          headers: const {'Accept': 'image/*'},
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+
+                            return const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            debugPrint('GAGAL MEMUAT FOTO: $photoUrl');
+                            debugPrint('ERROR FOTO: $error');
+                            return _photoPlaceholder();
+                          },
+                        ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -623,16 +664,11 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
   }
 
   void _showReportDetail(Map<String, dynamic> report) {
-    final photoPath = report['foto']?.toString();
-    final photoUrl = photoPath != null && photoPath.isNotEmpty
-        ? 'http://10.186.187.67:8000/storage/$photoPath'
-        : null;
-
+    final photoUrl = _photoUrl(report);
     final currentStatus = _status(report);
 
     final steps = ['DILAPORKAN', 'DIVERIFIKASI', 'DIPROSES', 'SELESAI'];
 
-    // Menyamakan status alternatif dari backend.
     final normalizedStatus = currentStatus == 'TERVERIFIKASI'
         ? 'DIVERIFIKASI'
         : currentStatus;
@@ -685,7 +721,19 @@ class _RiwayatScreenState extends State<RiwayatScreen> {
                           height: 200,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) {
+                          headers: const {'Accept': 'image/*'},
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+
+                            return const SizedBox(
+                              height: 200,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            debugPrint('GAGAL MEMUAT FOTO DETAIL: $photoUrl');
+                            debugPrint('ERROR FOTO DETAIL: $error');
+
                             return Container(
                               height: 140,
                               color: Colors.grey[200],
