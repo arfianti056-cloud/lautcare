@@ -1,6 +1,9 @@
 
 import 'package:flutter/material.dart';
+
 import '../services/admin_dashboard_service.dart';
+import 'daftar_laporan.dart';
+import 'notifikasi_admin.dart';
 
 class DashboardAdmin extends StatefulWidget {
   final String token;
@@ -10,9 +13,9 @@ class DashboardAdmin extends StatefulWidget {
     required this.token,
   });
 
-  static const blue = Color(0xFF0878E8);
-  static const navy = Color(0xFF123F70);
-  static const pale = Color(0xFFF2FAFF);
+  static const Color blue = Color(0xFF0878E8);
+  static const Color navy = Color(0xFF123F70);
+  static const Color pale = Color(0xFFF2FAFF);
 
   @override
   State<DashboardAdmin> createState() => _DashboardAdminState();
@@ -28,26 +31,60 @@ class _DashboardAdminState extends State<DashboardAdmin> {
         AdminDashboardService.fetchDashboard(widget.token);
   }
 
-  void _reload() {
-    setState(() {
-      dashboardFuture =
-          AdminDashboardService.fetchDashboard(widget.token);
-    });
-  }
-
-  Future<void> _refresh() async {
-    final future =
-        AdminDashboardService.fetchDashboard(widget.token);
+  Future<void> _refreshDashboard() async {
+    final future = AdminDashboardService.fetchDashboard(widget.token);
 
     setState(() {
       dashboardFuture = future;
     });
 
-    try {
-      await future;
-    } catch (_) {
-      // Error akan ditampilkan oleh FutureBuilder.
+    await future;
+  }
+
+  // Membuka halaman daftar laporan dengan filter status.
+  void bukaDaftarLaporan(
+    List<Map<String, dynamic>> laporan,
+    String? status,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DaftarLaporan(
+          laporan: laporan,
+          statusFilter: status,
+        ),
+      ),
+    );
+  }
+
+  int _ambilAngka(
+    Map<String, dynamic> stats,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = stats[key];
+
+      if (value is num) {
+        return value.toInt();
+      }
+
+      if (value != null) {
+        return int.tryParse(value.toString()) ?? 0;
+      }
     }
+
+    return 0;
+  }
+
+  List<Map<String, dynamic>> _ambilDaftarLaporan(dynamic data) {
+    if (data is! List) {
+      return [];
+    }
+
+    return data
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
   }
 
   @override
@@ -60,7 +97,9 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: DashboardAdmin.blue,
+                ),
               );
             }
 
@@ -72,14 +111,13 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
-                        Icons.cloud_off,
-                        size: 48,
-                        color: DashboardAdmin.blue,
+                        Icons.cloud_off_outlined,
+                        size: 55,
+                        color: Colors.redAccent,
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Data dashboard gagal dimuat',
-                        textAlign: TextAlign.center,
+                        'Gagal memuat dashboard',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -93,7 +131,14 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
-                        onPressed: _reload,
+                        onPressed: () {
+                          setState(() {
+                            dashboardFuture =
+                                AdminDashboardService.fetchDashboard(
+                              widget.token,
+                            );
+                          });
+                        },
                         icon: const Icon(Icons.refresh),
                         label: const Text('Coba Lagi'),
                       ),
@@ -103,187 +148,355 @@ class _DashboardAdminState extends State<DashboardAdmin> {
               );
             }
 
-            final response = snapshot.data;
+            final response = snapshot.data ?? {};
 
-            if (response == null) {
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Respons dashboard kosong.'),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: _reload,
-                      child: const Text('Coba Lagi'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            final rawStats = response['stats'];
-            final stats = rawStats is Map
-                ? Map<String, dynamic>.from(rawStats)
+            final statsData = response['stats'];
+            final stats = statsData is Map
+                ? Map<String, dynamic>.from(statsData)
                 : <String, dynamic>{};
 
-            final rawReports = response['laporan'];
-            final reports = rawReports is List
-                ? rawReports
-                    .whereType<Map>()
-                    .map(
-                      (item) => Map<String, dynamic>.from(item),
-                    )
-                    .toList()
-                : <Map<String, dynamic>>[];
+            final laporan = _ambilDaftarLaporan(
+              response['laporan'],
+            );
 
-            return Column(
-              children: [
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _refresh,
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(20),
+            final total = _ambilAngka(
+              stats,
+              ['total', 'total_laporan'],
+            );
+
+            final terverifikasi = _ambilAngka(
+              stats,
+              ['diverifikasi', 'terverifikasi'],
+            );
+
+            final diproses = _ambilAngka(
+              stats,
+              ['diproses'],
+            );
+
+            final selesai = _ambilAngka(
+              stats,
+              ['selesai'],
+            );
+
+            return RefreshIndicator(
+              color: DashboardAdmin.blue,
+              onRefresh: _refreshDashboard,
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _header(),
+
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _Header(),
-                        const SizedBox(height: 24),
-                        _StatsGrid(stats: stats),
-                        const SizedBox(height: 30),
+                        const Text(
+                          'Ringkasan Laporan',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: DashboardAdmin.navy,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text(
+                          'Pantau laporan kebersihan laut di LautCare.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+
+                        // Empat kartu statistik yang dapat ditekan.
+                        GridView.count(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          shrinkWrap: true,
+                          physics:
+                              const NeverScrollableScrollPhysics(),
+                          childAspectRatio: 1.35,
+                          children: [
+                            _StatCard(
+                              title: 'Total Laporan',
+                              value: total,
+                              icon: Icons.description_outlined,
+                              color: DashboardAdmin.blue,
+                              onTap: () {
+                                bukaDaftarLaporan(laporan, null);
+                              },
+                            ),
+                            _StatCard(
+                              title: 'Terverifikasi',
+                              value: terverifikasi,
+                              icon: Icons.verified_outlined,
+                              color: Colors.blue,
+                              onTap: () {
+                                bukaDaftarLaporan(
+                                  laporan,
+                                  'DIVERIFIKASI',
+                                );
+                              },
+                            ),
+                            _StatCard(
+                              title: 'Diproses',
+                              value: diproses,
+                              icon: Icons.sync_outlined,
+                              color: Colors.orange,
+                              onTap: () {
+                                bukaDaftarLaporan(
+                                  laporan,
+                                  'DIPROSES',
+                                );
+                              },
+                            ),
+                            _StatCard(
+                              title: 'Selesai',
+                              value: selesai,
+                              icon: Icons.check_circle_outline,
+                              color: Colors.green,
+                              onTap: () {
+                                bukaDaftarLaporan(
+                                  laporan,
+                                  'SELESAI',
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 28),
+
                         Row(
                           children: [
                             const Expanded(
                               child: Text(
                                 'Laporan Terbaru',
                                 style: TextStyle(
-                                  color: DashboardAdmin.blue,
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold,
+                                  color: DashboardAdmin.navy,
                                 ),
                               ),
                             ),
-                            IconButton(
-                              onPressed: _reload,
-                              tooltip: 'Muat ulang',
-                              icon: const Icon(Icons.refresh),
-                              color: DashboardAdmin.blue,
+                            TextButton(
+                              onPressed: () {
+                                bukaDaftarLaporan(laporan, null);
+                              },
+                              child: const Text('Lihat Semua'),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        if (reports.isEmpty)
-                          const _EmptyReports()
-                        else
-                          ...reports.map(
-                            (report) => Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: 14),
-                              child: _ReportTile(report: report),
+
+                        const SizedBox(height: 8),
+
+                        if (laporan.isEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                          ),
+                            child: const Column(
+                              children: [
+                                Icon(
+                                  Icons.inbox_outlined,
+                                  size: 45,
+                                  color: Colors.black26,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Belum ada laporan.',
+                                  style: TextStyle(
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          ...laporan.take(5).map(
+                                (item) => _ReportTile(
+                                  laporan: item,
+                                  onTap: () {
+                                    bukaDaftarLaporan(
+                                      laporan,
+                                      null,
+                                    );
+                                  },
+                                ),
+                              ),
                       ],
                     ),
                   ),
-                ),
-                const _BottomNavigation(),
-              ],
+                ],
+              ),
             );
           },
         ),
       ),
+
+      // Navigasi bawah.
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: DashboardAdmin.blue,
+        unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          if (index == 1) {
+            dashboardFuture.then((data) {
+              if (!mounted) return;
+
+              final daftarLaporan = _ambilDaftarLaporan(
+                data['laporan'],
+              );
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DaftarLaporan(
+                    laporan: daftarLaporan,
+                    statusFilter: null,
+                  ),
+                ),
+              );
+            });
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Beranda',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.description_outlined),
+            label: 'Daftar Laporan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profil',
+          ),
+        ],
+      ),
     );
   }
-}
 
-class _Header extends StatelessWidget {
-  const _Header();
+ 
 
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Icon(
-          Icons.waves_rounded,
-          color: DashboardAdmin.blue,
-          size: 32,
+Widget _header() {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 12,
+    ),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: Color(0x10000000),
+          blurRadius: 5,
+          offset: Offset(0, 2),
         ),
-        SizedBox(width: 12),
-        Expanded(
+      ],
+    ),
+    child: Row(
+      children: [
+        // Logo LautCare di sebelah kiri
+        Image.asset(
+          'assets/images/logo.png',
+          width: 28,
+          height: 28,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(
+              Icons.waves,
+              color: DashboardAdmin.blue,
+              size: 28,
+            );
+          },
+        ),
+
+        const SizedBox(width: 12),
+
+        // Judul header
+        const Expanded(
           child: Text(
             'Dashboard Admin',
             style: TextStyle(
               color: DashboardAdmin.navy,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
+
+        // Tombol notifikasi menggantikan pencarian
+        IconButton(
+          tooltip: 'Notifikasi',
+          onPressed: () {
+    Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => NotifikasiAdmin(
+      token: widget.token,
+    ),
+  ),
+);
+  },
+          icon: const Icon(
+            Icons.notifications_none_rounded,
+            color: DashboardAdmin.navy,
+            size: 25,
+          ),
+        ),
       ],
-    );
-  }
+    ),
+  );
+}
 }
 
-class _StatsGrid extends StatelessWidget {
-  final Map<String, dynamic> stats;
 
-  const _StatsGrid({required this.stats});
+class _StatCard extends StatelessWidget {
+  final String title;
+  final int value;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      (
-        'Total Laporan',
-        stats['total'] ?? 0,
-        Icons.notifications_active,
-        const Color(0xFF0878E8),
-        const Color(0xFFE1F1FF),
-      ),
-      (
-        'Diproses',
-        stats['diproses'] ?? 0,
-        Icons.pending_actions,
-        const Color(0xFF13A86B),
-        const Color(0xFFE2F8EF),
-      ),
-      (
-        'Selesai',
-        stats['selesai'] ?? 0,
-        Icons.verified_user,
-        const Color(0xFF13A86B),
-        const Color(0xFFE2F8EF),
-      ),
-      (
-        'Terverifikasi',
-        stats['diverifikasi'] ?? 0,
-        Icons.sync_alt,
-        const Color(0xFFF07816),
-        const Color(0xFFFFF0DC),
-      ),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      gridDelegate:
-          const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: 1.35,
-      ),
-      itemBuilder: (context, index) {
-        final item = items[index];
-
-        return Container(
-          padding: const EdgeInsets.all(14),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withValues(alpha: 0.15),
+            ),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x0D1875B9),
-                blurRadius: 15,
-                offset: Offset(0, 5),
+                color: Color(0x08000000),
+                blurRadius: 8,
+                offset: Offset(0, 3),
               ),
             ],
           ),
@@ -291,246 +504,118 @@ class _StatsGrid extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Icon(
+                icon,
+                color: color,
+                size: 27,
+              ),
               Text(
-                item.$1,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                value.toString(),
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              Text(
+                title,
                 style: const TextStyle(
+                  fontSize: 13,
                   color: DashboardAdmin.navy,
-                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: item.$5,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      item.$3,
-                      color: item.$4,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Text(
-                      '${item.$2}',
-                      style: const TextStyle(
-                        color: DashboardAdmin.navy,
-                        fontSize: 27,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
 class _ReportTile extends StatelessWidget {
-  final Map<String, dynamic> report;
+  final Map<String, dynamic> laporan;
+  final VoidCallback onTap;
 
-  const _ReportTile({required this.report});
-
-  @override
-  Widget build(BuildContext context) {
-    final title = (
-      report['title'] ??
-      report['judul'] ??
-      'Tanpa judul'
-    ).toString();
-
-    final status =
-        (report['status'] ?? 'Belum ada status').toString();
-
-    final date = (report['created_at'] ?? '-').toString();
-
-    final normalizedStatus = status.toUpperCase();
-
-    final Color color;
-    final Color background;
-
-    if (normalizedStatus == 'SELESAI') {
-      color = const Color(0xFF13A86B);
-      background = const Color(0xFFE2F8EF);
-    } else if (normalizedStatus == 'DIPROSES') {
-      color = const Color(0xFFF07816);
-      background = const Color(0xFFFFF0DC);
-    } else {
-      color = DashboardAdmin.blue;
-      background = const Color(0xFFEAF5FF);
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D1875B9),
-            blurRadius: 13,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 78,
-            height: 78,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD8F0FC),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: const Icon(
-              Icons.waves,
-              color: DashboardAdmin.blue,
-              size: 35,
-            ),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: DashboardAdmin.navy,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 9),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: background,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  date.length >= 10
-                      ? date.substring(0, 10)
-                      : date,
-                  style: const TextStyle(
-                    color: Color(0xFF6686A5),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyReports extends StatelessWidget {
-  const _EmptyReports();
+  const _ReportTile({
+    required this.laporan,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 30),
-      child: Column(
-        children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 48,
+    final judul =
+        laporan['judul'] ?? laporan['title'] ?? 'Tanpa Judul';
+
+    final status = (laporan['status'] ?? 'DILAPORKAN')
+        .toString()
+        .toUpperCase();
+
+    final kategori =
+        laporan['kategori'] ?? laporan['category'] ?? '-';
+
+    final warna = status == 'SELESAI'
+        ? Colors.green
+        : status == 'DIPROSES'
+            ? Colors.orange
+            : status == 'DIVERIFIKASI' ||
+                    status == 'TERVERIFIKASI'
+                ? Colors.blue
+                : Colors.red;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      color: Colors.white,
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: DashboardAdmin.pale,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.description_outlined,
             color: DashboardAdmin.blue,
           ),
-          SizedBox(height: 10),
-          Text('Belum ada laporan terbaru.'),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomNavigation extends StatelessWidget {
-  const _BottomNavigation();
-
-  @override
-  Widget build(BuildContext context) {
-    const items = [
-      (Icons.home_filled, 'Beranda'),
-      (Icons.description_outlined, 'Laporan'),
-      (Icons.location_on_outlined, 'Pencarian'),
-      (Icons.notifications_none, 'Notifikasi'),
-      (Icons.person_outline, 'Profil'),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(5, 12, 5, 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFDCEFFA)),
         ),
-      ),
-      child: Row(
-        children: [
-          for (var i = 0; i < items.length; i++)
-            Expanded(
-              child: InkWell(
-                onTap: () {},
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      items[i].$1,
-                      size: 25,
-                      color: i == 0
-                          ? DashboardAdmin.blue
-                          : const Color(0xFF6385A4),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      items[i].$2,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: i == 0
-                            ? FontWeight.w800
-                            : FontWeight.w500,
-                        color: i == 0
-                            ? DashboardAdmin.blue
-                            : const Color(0xFF6385A4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        title: Text(
+          judul.toString(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: DashboardAdmin.navy,
+          ),
+        ),
+        subtitle:null,
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 5,
+          ),
+          decoration: BoxDecoration(
+            color: warna.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            status == 'DIVERIFIKASI' ||
+                    status == 'TERVERIFIKASI'
+                ? 'Terverifikasi'
+                : status == 'DILAPORKAN'
+                    ? 'Dilaporkan'
+                    : status,
+            style: TextStyle(
+              color: warna,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
