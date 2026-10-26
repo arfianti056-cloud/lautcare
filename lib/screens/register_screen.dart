@@ -209,7 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     const SizedBox(height: 16),
-                    _label('Email atau Nomor HP'),
+                    _label('Email Address'),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _emailCtrl,
